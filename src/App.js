@@ -1,21 +1,30 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
 
-class App extends Component {
+function WrappedComponent(props) {
+  return (
+    <div>
+      <div>{JSON.stringify(props)}</div>
+    </div>
+  );
+}
+
+function higherOrderComponent(WrappedComponent) {
+  return class extends Component {
+    render() {
+      return <WrappedComponent bar="bar" {...this.props} />;
+    }
+  }
+}
+
+export default class App extends Component {
   render() {
+    const EnhancedComponent = higherOrderComponent(WrappedComponent);
+
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
+        <h1>App</h1>
+        <EnhancedComponent foo="foo" />
       </div>
     );
   }
 }
-
-export default App;
