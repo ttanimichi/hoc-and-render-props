@@ -9,11 +9,9 @@ function WrappedComponent(props) {
 }
 
 function higherOrderComponent(WrappedComponent) {
-  return class extends Component {
-    render() {
-      return <WrappedComponent bar="bar" {...this.props} />;
-    }
-  }
+  return (props) => {
+    return <WrappedComponent piyo="piyo" {...props} />;
+  };
 }
 
 export default class App extends Component {
