@@ -1,4 +1,30 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+
+class Provider extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      counter: { value: 0 }
+    }
+  }
+
+  getChildContext() {
+    return {
+      getState: () => this.state,
+      dispatch: (func) => { this.setState(func) }
+    };
+  }
+
+  render() {
+    return this.props.children;
+  }
+}
+
+Provider.childContextTypes = {
+  getState: PropTypes.func.isRequired,
+  dispatch: PropTypes.func.isRequired,
+};
 
 function CounterComponent({ value, handleClick }) {
   return (
@@ -9,33 +35,43 @@ function CounterComponent({ value, handleClick }) {
   );
 }
 
-function higherOrderComponent(CounterComponent) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
-      this.handleClick = this.handleClick.bind(this);
-      this.state = { value: 0 };
-    }
+function connect(mapStateToProps, mapDispatchToProps) {
+  return (WrappedComponent) => {
+    const enhancedComponent = class extends Component {
+      render() {
+        const propsFromState = mapStateToProps(this.context.getState());
+        const handleClick = () => { this.context.dispatch(mapDispatchToProps.handleClick) };
 
-    handleClick() {
-      this.setState(({ value }) => {
-        return { value: value + 1 };
-      });
-    }
+        return <WrappedComponent {...propsFromState} handleClick={handleClick} />;
+      }
+    };
 
-    render() {
-      return <CounterComponent value={this.state.value} handleClick={this.handleClick} />;
-    }
+    enhancedComponent.contextTypes = {
+      getState: PropTypes.func.isRequired,
+      dispatch: PropTypes.func.isRequired,
+    };
+
+    return enhancedComponent;
   }
 }
 
-const CounterContainer = higherOrderComponent(CounterComponent);
+function mapStateToProps(state) {
+  return state.counter;
+}
 
-export default function App() {
+const mapDispatchToProps = {
+  handleClick: (prevState) => { return { value: prevState.value + 1 } }
+};
+
+const CounterContainer = connect(mapStateToProps, mapDispatchToProps)(CounterComponent);
+
+function App() {
   return (
-    <div>
+    <Provider>
       <h1>Counter</h1>
       <CounterContainer />
-    </div>
+    </Provider>
   );
 }
+
+export default App;
