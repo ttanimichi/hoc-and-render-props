@@ -5,15 +5,12 @@ class Provider extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      counter: { value: 0 }
+      todoList: { todos: ['foo', 'bar', 'piyo'] }
     }
   }
 
   getChildContext() {
-    return {
-      getState: () => this.state,
-      dispatch: (func) => { this.setState(func) }
-    };
+    return { getState: () => this.state };
   }
 
   render() {
@@ -22,33 +19,22 @@ class Provider extends Component {
 }
 
 Provider.childContextTypes = {
-  getState: PropTypes.func.isRequired,
-  dispatch: PropTypes.func.isRequired,
+  getState: PropTypes.func.isRequired
 };
 
-function CounterComponent({ value, handleClick }) {
-  return (
-    <div>
-      <div>count: {value}</div>
-      <button onClick={handleClick}>+1</button>
-    </div>
-  );
+function TodoComponent({ todos }) {
+  return <ul>{todos.map((v) => <li key={v}>{v}</li>)}</ul>;
 }
 
-function connect(mapStateToProps, mapDispatchToProps) {
+function connect(mapStateToProps) {
   return (WrappedComponent) => {
-    const enhancedComponent = class extends Component {
-      render() {
-        const propsFromState = mapStateToProps(this.context.getState());
-        const handleClick = () => { this.context.dispatch(mapDispatchToProps.handleClick) };
-
-        return <WrappedComponent {...propsFromState} handleClick={handleClick} />;
-      }
+    const enhancedComponent = (_, {getState}) => {
+      const propsFromState = mapStateToProps(getState());
+      return <WrappedComponent {...propsFromState} />;
     };
 
     enhancedComponent.contextTypes = {
       getState: PropTypes.func.isRequired,
-      dispatch: PropTypes.func.isRequired,
     };
 
     return enhancedComponent;
@@ -56,22 +42,16 @@ function connect(mapStateToProps, mapDispatchToProps) {
 }
 
 function mapStateToProps(state) {
-  return state.counter;
+  return state.todoList;
 }
 
-const mapDispatchToProps = {
-  handleClick: (prevState) => { return { value: prevState.value + 1 } }
-};
+const TodoContainer = connect(mapStateToProps)(TodoComponent);
 
-const CounterContainer = connect(mapStateToProps, mapDispatchToProps)(CounterComponent);
-
-function App() {
+export default function App() {
   return (
     <Provider>
-      <h1>Counter</h1>
-      <CounterContainer />
+      <h1>Todo</h1>
+      <TodoContainer />
     </Provider>
   );
 }
-
-export default App;
